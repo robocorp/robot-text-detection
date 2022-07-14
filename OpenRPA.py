@@ -262,6 +262,13 @@ class OpenRPA:
         if result:
             self.mouse_click_position(*result[int(index)]["center"], button=button, count=count)
 
+    def click_text(self, text, button="left", count=1, distance=0, index=0):
+        if not self.prepared: self.take_screenshot()
+
+        result = self.search_line(text, distance=distance)
+        if result:
+            self.mouse_click_position(*result[int(index)]["center"], button=button, count=count)
+
     def click_image(self, filename, button="left", count=1, index=0):
         if not self.prepared: self.take_screenshot()
 
