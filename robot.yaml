@@ -1,0 +1,12 @@
+tasks:
+  Detect Text:
+    robotTaskName: Detect text
+
+condaConfigFile: conda.yaml
+artifactsDir: output
+PATH:
+  - .
+PYTHONPATH:
+  - .
+ignoreFiles:
+    - .gitignore

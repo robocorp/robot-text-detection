@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+  - fcakyon
+dependencies:
+  - python=3.8.13
+  - python-mss=6.1.0
+  - numpy=1.23.1
+  - craft-text-detector=0.3.3
+  - tesseract=5.2.0
+  - pytesseract=0.3.10
+  - opencv=4.6.0
+  - regex=2022.7.9
+  - pip=20.1
+  - pynput=1.7.3
+  - pip:
+    - rpaframework==15.3.0
