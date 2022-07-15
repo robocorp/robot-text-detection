@@ -56,20 +56,22 @@ class OpenRPA:
             scale_number(x, 0, self.rgb.shape[1], self.monitor["left"], self.monitor["left"] + self.monitor["width"]), 
             scale_number(y, 0, self.rgb.shape[0], self.monitor["top"], self.monitor["top"] + self.monitor["height"]))
         
-    def clear_image(self):
-        self.prepared = False
-
     def take_screenshot(self):
         self.screenshot()
         self._prepare()
 
     def load_image(self, filename):
+        # for debug
+        self.monitor = None
         self.image_path = os.path.splitext(os.path.basename(filename))[0]
         self.bgr = cv2.imread(filename)
         self.rgb = cv2.cvtColor(self.bgr, cv2.COLOR_BGR2RGB)
         self._prepare()
 
     def _prepare(self):
+        if self.debug:
+            self._recognition_only()
+
         self._detect_text()
         self._recognize_text()
         self.prepared = True
@@ -113,6 +115,37 @@ class OpenRPA:
                 heatmaps=self.text_areas["heatmaps"],
                 output_dir=self.temp_dir
             )
+
+    def _recognition_only(self):
+        print("Recognition only")
+        image = self.bgr.copy()
+        # self.text_words, self.text_lines = [], []
+
+        d = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+
+        # words_in_line = []
+        for text, conf, x, y, w, h in zip(d['text'], map(float, d['conf']), d['left'], d['top'], d['width'], d['height']):
+            text = text.strip()
+            if text:
+                word = {
+                    "left": round(x),
+                    "top": round(y),
+                    "width": round(w),
+                    "height": round(h),
+                    "text": text.strip(),
+                    "conf": conf,
+                    "center": (round(x + w / 2), round(y + h / 2))
+                }
+                # words_in_line.append(word)
+                if self.debug:
+                    print("Word: '%s' %r %.2f" % (word["text"], word["center"], word["conf"]))
+                    image = cv2.rectangle(image, (word["left"], word["top"]),
+                        (word["left"] + word["width"], word["top"] + word["height"]), (0, 0, 255), 3)
+
+        # if self.debug:
+        filename = f"{self.image_path}_recognition_only.png"
+        f = os.path.join(self.temp_dir, filename)
+        cv2.imwrite(f, image)
 
     def _recognize_text(self):
         image = self.bgr.copy()
