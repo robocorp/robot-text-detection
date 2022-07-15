@@ -1,6 +1,7 @@
 import os
 import math
 import time
+import base64
 
 import numpy
 import cv2
@@ -12,6 +13,8 @@ import pynput
 import craft_text_detector as craft
 
 from torch import cuda
+
+from robot.api import logger
 
 def scale_number(from_val, from_min, from_max, to_min, to_max):
     return round((to_max - to_min) * (from_val - from_min) / (from_max - from_min) + to_min)
@@ -117,7 +120,7 @@ class OpenRPA:
             )
 
     def _recognition_only(self):
-        print("Recognition only")
+        print("Tesseract")
         image = self.bgr.copy()
         # self.text_words, self.text_lines = [], []
 
@@ -148,6 +151,7 @@ class OpenRPA:
         cv2.imwrite(f, image)
 
     def _recognize_text(self):
+        print("CRAFT + Tesseract")
         image = self.bgr.copy()
 
         self.text_words, self.text_lines = [], []
@@ -199,10 +203,26 @@ class OpenRPA:
             cv2.imwrite(f, image)
 
     def _store_search_image(self, image, comment=None):
+        image = self._thumbnail(image)
         filename = f"{self.image_path}_search_{self.num_searches:03}.png"
         self.num_searches += 1
         f = os.path.join(self.temp_dir, filename)
         cv2.imwrite(f, image)
+
+        with open(f, "rb") as img_file:
+            base64_encoded_data = base64.b64encode(img_file.read())
+        base64_message = base64_encoded_data.decode('utf-8')
+
+        logger.info('<img src="data:image/png;base64,%s">' % base64_message, html=True)
+
+    def _thumbnail(self, image):
+        y, x, _ = image.shape
+
+        while x > 1280 or y > 800:
+            x /= 2
+            y /= 2
+
+        return cv2.resize(image, (int(x), int(y)), interpolation=cv2.INTER_LINEAR)
 
     def search_line(self, pattern, distance=0):
         if not self.prepared: self.take_screenshot()
